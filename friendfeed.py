@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import argparse
 import asyncio
 import os
 import ssl
@@ -20,8 +21,11 @@ class FriendFeeder:
     ]
     CHUNK_SIZE = 25
 
-    def __init__(self, username, access_token):
+    def __init__(self, username, access_token, opml_in=None):
         self.access_token = access_token
+        self.feeds_in = []
+        if opml_in:
+            self.feeds_in = self.import_opml(opml_in)
         friends = self.fetch_friends(username)
         self.friends = []
         cursor = 0
@@ -34,7 +38,7 @@ class FriendFeeder:
         document = OpmlDocument()
         for friend in self.friends:
             self.status(f"{friend['username']}: {friend.get('feed', '-')}")
-            if "feed" in friend:
+            if "feed" in friend and friend["feed"] not in self.feeds_in:
                 document.add_rss(
                     friend["feed_title"] or friend["username"], friend["feed"],
                 )
@@ -100,6 +104,22 @@ class FriendFeeder:
                     self.warn(f"* Unknown error for {url}: {str(exc)}")
         return None
 
+    def import_opml(self, filename):
+        try:
+            opml_in = OpmlDocument.load(filename)
+        except Exception as exc:
+            self.fatal(f"Can't load {filename}: {str(exc)}")
+        return self.walk_outlines(opml_in.outlines)
+
+    def walk_outlines(self, outlines):
+        feeds = []
+        for outline in outlines:
+            if outline.xml_url:
+                feeds.append(outline.xml_url)
+            if outline.outlines:
+                feeds = feeds + self.walk_outlines(outline.outlines)
+        return feeds
+
     def status(self, message):
         sys.stderr.write(f"{message}\n")
 
@@ -111,9 +131,27 @@ class FriendFeeder:
         sys.exit(1)
 
 
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Validate and show data model of a Structured Field Value."
+    )
+    parser.add_argument(
+        "-t",
+        "--twitter",
+        dest="twitter_username",
+        help="Twitter username",
+        required=True,
+    )
+    parser.add_argument(
+        "-i", "--input_opml", dest="input_opml", help="OPML file input", default=False,
+    )
+    return parser.parse_args()
+
+
 if __name__ == "__main__":
     ACCESS_TOKEN = os.environ.get("TWITTER_ACCESS_TOKEN", None)
     if not ACCESS_TOKEN:
         sys.stderr.write("Set TWITTER_ACCESS_TOKEN in environment.\n")
         sys.exit(1)
-    print(FriendFeeder(sys.argv[1], ACCESS_TOKEN))
+    args = parse_args()
+    print(FriendFeeder(args.twitter_username, ACCESS_TOKEN, args.input_opml))
