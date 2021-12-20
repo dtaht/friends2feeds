@@ -21,8 +21,6 @@ class FriendFeeder:
     CHUNK_SIZE = 25
 
     def __init__(self, username, access_token):
-        if access_token is None:
-            self.fatal("Set TWITTER_ACCESS_TOKEN in environment.")
         self.access_token = access_token
         friends = self.fetch_friends(username)
         self.friends = []
@@ -115,4 +113,7 @@ class FriendFeeder:
 
 if __name__ == "__main__":
     ACCESS_TOKEN = os.environ.get("TWITTER_ACCESS_TOKEN", None)
+    if not ACCESS_TOKEN:
+        sys.stderr.write("Set TWITTER_ACCESS_TOKEN in environment.\n")
+        sys.exit(1)
     print(FriendFeeder(sys.argv[1], ACCESS_TOKEN))
