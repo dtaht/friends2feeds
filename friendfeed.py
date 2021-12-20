@@ -13,7 +13,7 @@ from opml import OpmlDocument
 
 class FriendFeeder:
     TW_API = "https://api.twitter.com/2/users"
-    TIMEOUT = 10
+    TIMEOUT = 7
     FEED_TYPES = [
         "application/rss+xml",
         "application/atom+xml",
@@ -35,12 +35,12 @@ class FriendFeeder:
     def __str__(self):
         document = OpmlDocument()
         for friend in self.friends:
-            sys.stderr.write(f"{friend['username']}: {friend.get('feed', '-')}\n")
+            self.status(f"{friend['username']}: {friend.get('feed', '-')}")
             if "feed" in friend:
                 document.add_rss(
-                    friend["username"], friend["feed"],
+                    friend["feed_title"] or friend["username"], friend["feed"],
                 )
-        return document.dumps()
+        return document.dumps(pretty=True)
 
     def fetch_friends(self, username):
         user_id = self.lookup_user(username)
@@ -84,6 +84,7 @@ class FriendFeeder:
             url = link.get("href", None)
             if url:
                 friend["feed"] = urljoin(str(base), url, allow_fragments=False)
+                friend["feed_title"] = link.get("title", None)
                 break
         return friend
 
@@ -94,12 +95,18 @@ class FriendFeeder:
                 try:
                     return await client.get(url, timeout=self.TIMEOUT)
                 except httpx.RequestError as exc:
-                    sys.stderr.write(f"* Request error to {exc.request.url}: {exc}\n")
+                    self.warn(f"Request error to {exc.request.url}: {exc}")
                 except ssl.SSLCertVerificationError as exc:
-                    sys.stderr.write(f"* Invalid cert for {url}\n")
+                    self.warn(f"Invalid cert for {url}")
                 except Exception as exc:
-                    sys.stderr.write(f"* Unknown error for {url}: {str(exc)}")
+                    self.warn(f"* Unknown error for {url}: {str(exc)}")
         return None
+
+    def status(self, message):
+        sys.stderr.write(f"{message}\n")
+
+    def warn(self, message):
+        sys.stderr.write(f"WARN: {message}\n")
 
     def fatal(self, message):
         sys.stderr.write(f"FATAL: {message}\n")
