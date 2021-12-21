@@ -21,8 +21,10 @@ class FriendFeeder:
     ]
     CHUNK_SIZE = 25
 
-    def __init__(self, username, access_token, opml_in=None):
+    def __init__(self, username, access_token, opml_in=None, quiet=True, verbose=False):
         self.access_token = access_token
+        self.quiet = quiet
+        self.verbose = verbose
         self.feeds_in = []
         if opml_in:
             self.feeds_in = self.import_opml(opml_in)
@@ -48,7 +50,9 @@ class FriendFeeder:
                         friend["feed_title"] or friend["username"], friend["feed"],
                     )
         pct = friends_with_feeds / len(self.friends) * 100
-        self.status(f"Of {len(self.friends)} friends, {friends_with_feeds} have feeds ({pct:.3n}%)")
+        self.status(
+            f"Of {len(self.friends)} friends, {friends_with_feeds} have feeds ({pct:.3n}%)"
+        )
         self.status(f"({feeds_added} feeds added)")
         return document.dumps(pretty=True)
 
@@ -129,10 +133,12 @@ class FriendFeeder:
         return feeds
 
     def status(self, message):
-        sys.stderr.write(f"{message}\n")
+        if self.verbose:
+            sys.stderr.write(f"{message}\n")
 
     def warn(self, message):
-        sys.stderr.write(f"WARN: {message}\n")
+        if not self.quiet:
+            sys.stderr.write(f"WARN: {message}\n")
 
     def fatal(self, message):
         sys.stderr.write(f"FATAL: {message}\n")
@@ -153,6 +159,18 @@ def parse_args():
     parser.add_argument(
         "-i", "--input_opml", dest="input_opml", help="OPML file input", default=False,
     )
+    verbosity = parser.add_mutually_exclusive_group()
+    verbosity.add_argument(
+        "-q", "--quiet", dest="quiet", action="store_true", help="Suppress warnings"
+    )
+    verbosity.add_argument(
+        "-v",
+        "--verbose",
+        dest="verbose",
+        action="store_true",
+        help="More verbose details",
+    )
+
     return parser.parse_args()
 
 
@@ -162,4 +180,12 @@ if __name__ == "__main__":
         sys.stderr.write("Set TWITTER_ACCESS_TOKEN in environment.\n")
         sys.exit(1)
     args = parse_args()
-    print(FriendFeeder(args.twitter_username, ACCESS_TOKEN, args.input_opml))
+    print(
+        FriendFeeder(
+            args.twitter_username,
+            ACCESS_TOKEN,
+            args.input_opml,
+            args.quiet,
+            args.verbose,
+        )
+    )
