@@ -47,7 +47,8 @@ class FriendFeeder:
                 if friend["feed"] not in self.feeds_in:
                     feeds_added += 1
                     document.add_rss(
-                        friend["feed_title"] or friend["username"], friend["feed"],
+                        friend["feed_title"] or friend["username"],
+                        friend["feed"],
                     )
         pct = friends_with_feeds / len(self.friends) * 100
         self.status(
@@ -157,7 +158,11 @@ def parse_args():
         required=True,
     )
     parser.add_argument(
-        "-i", "--input_opml", dest="input_opml", help="OPML file input", default=False,
+        "-i",
+        "--input_opml",
+        dest="input_opml",
+        help="OPML file input",
+        default=False,
     )
     verbosity = parser.add_mutually_exclusive_group()
     verbosity.add_argument(
