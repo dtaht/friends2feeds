@@ -36,12 +36,20 @@ class FriendFeeder:
 
     def __str__(self):
         document = OpmlDocument()
+        friends_with_feeds = 0
+        feeds_added = 0
         for friend in self.friends:
             self.status(f"{friend['username']}: {friend.get('feed', '-')}")
-            if "feed" in friend and friend["feed"] not in self.feeds_in:
-                document.add_rss(
-                    friend["feed_title"] or friend["username"], friend["feed"],
-                )
+            if "feed" in friend:
+                friends_with_feeds += 1
+                if friend["feed"] not in self.feeds_in:
+                    feeds_added += 1
+                    document.add_rss(
+                        friend["feed_title"] or friend["username"], friend["feed"],
+                    )
+        pct = friends_with_feeds / len(self.friends) * 100
+        self.status(f"Of {len(self.friends)} friends, {friends_with_feeds} have feeds ({pct:.3n}%)")
+        self.status(f"({feeds_added} feeds added)")
         return document.dumps(pretty=True)
 
     def fetch_friends(self, username):
