@@ -107,7 +107,7 @@ class FriendFeeder:
                 except httpx.RequestError as exc:
                     self.warn(f"Request error to {exc.request.url}: {exc}")
                 except ssl.SSLCertVerificationError as exc:
-                    self.warn(f"Invalid cert for {url}")
+                    self.warn(f"Invalid cert for {url}: {str(exc)}")
                 except Exception as exc:
                     self.warn(f"* Unknown error for {url}: {str(exc)}")
         return None
