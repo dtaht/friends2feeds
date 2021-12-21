@@ -1,4 +1,6 @@
 
+version=$(shell grep version setup.cfg  | cut -d '=' -f 2 | xargs )
+
 .PHONY: clean
 clean:
 	find . -d -type d -name __pycache__ -exec rm -rf {} \;
