@@ -19,7 +19,7 @@ class FriendFeeder:
         "application/rss+xml",
         "application/atom+xml",
     ]
-    CHUNK_SIZE = 25
+    CHUNK_SIZE = 125
 
     def __init__(self, username, access_token, opml_in=None, quiet=True, verbose=False):
         self.access_token = access_token
