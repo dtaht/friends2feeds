@@ -14,12 +14,13 @@ from opml import OpmlDocument
 
 class FriendFeeder:
     TW_API = "https://api.twitter.com/2/users"
-    TIMEOUT = 7
+    TIMEOUT = 10
     FEED_TYPES = [
         "application/rss+xml",
         "application/atom+xml",
     ]
     CHUNK_SIZE = 125
+    REQHDRS = {'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko)'}
 
     def __init__(self, username, access_token, opml_in=None, quiet=True, verbose=False):
         self.access_token = access_token
@@ -108,9 +109,9 @@ class FriendFeeder:
         if url:
             async with httpx.AsyncClient(follow_redirects=True) as client:
                 try:
-                    return await client.get(url, timeout=self.TIMEOUT)
+                    return await client.get(url, timeout=self.TIMEOUT, headers=self.REQHDRS)
                 except httpx.RequestError as exc:
-                    self.warn(f"Request error to {exc.request.url}: {exc}")
+                    self.warn(f"Request error to {exc.request.url}: {str(exc) or exc.__class__}")
                 except ssl.SSLCertVerificationError as exc:
                     self.warn(f"Invalid cert for {url}: {str(exc)}")
                 except Exception as exc:
