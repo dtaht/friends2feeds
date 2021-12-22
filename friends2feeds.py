@@ -115,7 +115,7 @@ class FriendFeeder:
                 except ssl.SSLCertVerificationError as exc:
                     self.warn(f"Invalid cert for {url}: {str(exc)}")
                 except Exception as exc:
-                    self.warn(f"* Unknown error for {url}: {str(exc)}")
+                    self.warn(f"Unknown error for {url}: {str(exc)}")
         return None
 
     def import_opml(self, filename):
